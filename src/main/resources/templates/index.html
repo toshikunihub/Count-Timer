@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Count Timer</title>
+    <style>
+		body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+		#timer { font-size: 48px; margin-bottom: 20px; }
+		button { font-size: 18px; padding: 10px 20px; margin: 5px; }
+		#lapCounterDisplay { font-size: 20px; margin-top: 10px; }
+		#laps {
+		    margin-top: 20px;
+		    border: 1px solid #000;
+		    display: inline-block;
+		    padding: 10px;
+		    max-width: 220px;
+		    max-height: 200px;       /* 高さ制限 */
+		    overflow-y: auto;        /* 縦スクロールバー表示 */
+		}
+		#laps ul { list-style: none; padding: 0; margin: 0; }
+		#laps li { border-bottom: 1px solid #ccc; padding: 5px 0; text-align: left; }
+		#laps span.lap-number { font-weight: bold; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <div id="timer">00:00:00</div>
+    <button id="startStopBtn">Start</button>
+    <button id="resetBtn">Reset</button>
+
+    <!-- ラップ数カウント表示 -->
+    <div id="lapCounterDisplay">Lap Count: 0</div>
+
+    <div id="laps">
+        <ul id="lapList"></ul>
+    </div>
+
+    <script>
+        let timer = document.getElementById('timer');
+        let startStopBtn = document.getElementById('startStopBtn');
+        let resetBtn = document.getElementById('resetBtn');
+        let lapList = document.getElementById('lapList');
+        let lapCounterDisplay = document.getElementById('lapCounterDisplay');
+
+        let startTime = 0;
+        let elapsedTime = 0;
+        let timerInterval = null;
+        let running = false;
+
+        // ラップ情報をオブジェクトで保持
+        let laps = []; // { number: 1, time: '00:00:00' }
+        let lapCounter = 0;
+
+        function formatTime(ms) {
+            let totalSeconds = Math.floor(ms / 1000);
+            let minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+            let seconds = String(totalSeconds % 60).padStart(2, '0');
+            let centiseconds = String(Math.floor((ms % 1000) / 10)).padStart(2, '0'); // 0.01秒単位
+            return `${minutes}:${seconds}:${centiseconds}`;
+        }
+
+        function updateTimer() {
+            let currentTime = Date.now();
+            elapsedTime = currentTime - startTime;
+            timer.textContent = formatTime(elapsedTime);
+        }
+
+        function updateLapCounterDisplay() {
+            lapCounterDisplay.textContent = `Lap Count: ${lapCounter}`;
+        }
+
+        startStopBtn.addEventListener('click', () => {
+            if (!running) {
+                startTime = Date.now() - elapsedTime;
+                timerInterval = setInterval(updateTimer, 10);
+                startStopBtn.textContent = 'Stop';
+                running = true;
+            } else {
+                clearInterval(timerInterval);
+                startStopBtn.textContent = 'Start';
+                running = false;
+
+                if (elapsedTime > 0) {
+                    lapCounter++;
+                    updateLapCounterDisplay();
+                    laps.unshift({ number: lapCounter, time: formatTime(elapsedTime) });
+                    if (laps.length > 10) laps.pop();
+                    renderLaps();
+                }
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            elapsedTime = 0;
+            timer.textContent = "00:00:00";
+            startStopBtn.textContent = 'Start';
+            running = false;
+            laps = [];
+            lapCounter = 0;
+            updateLapCounterDisplay();
+            renderLaps();
+        });
+
+        function renderLaps() {
+            lapList.innerHTML = '';
+            laps.forEach((lap) => {
+                let li = document.createElement('li');
+                li.innerHTML = `<span class="lap-number">Lap${lap.number}</span>${lap.time}`;
+                lapList.appendChild(li);
+            });
+        }
+    </script>
+</body>
+</html>
