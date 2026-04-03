@@ -2,87 +2,35 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>実用性のないストップウォッチ</title>
+<title>タイマー</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <style>
-body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  margin-top: 50px;
-  transition: background-color 0.5s, color 0.5s;
-  position: relative;
-  -webkit-tap-highlight-color: transparent;
-}
-body.light-mode { background-color: #fff; color: #000; }
-body.dark-mode { background-color: #121212; color: #fff; }
+body { font-family: Arial,sans-serif; text-align:center; margin-top:50px; transition:background-color 0.5s,color 0.5s; position:relative; -webkit-tap-highlight-color:transparent; }
+body.light-mode{ background-color:#fff; color:#000; }
+body.dark-mode{ background-color:#121212; color:#fff; }
 
-#timer { font-size: 48px; margin-bottom: 20px; display: inline-block; transition: transform 0.2s; }
-button {
-  font-size: 18px;
-  padding: 10px 20px;
-  margin: 5px;
-  cursor: pointer;
-  border-radius: 8px;
-  border: none;
-}
-#lapCounterDisplay { font-size: 20px; margin-top: 10px; }
-#laps {
-  margin-top: 20px;
-  border: 1px solid #000;
-  display: inline-block;
-  padding: 10px;
-  max-width: 280px;
-  max-height: 200px;
-  overflow-y: auto;
-  background-color: rgba(255,255,255,0.05);
-}
-#laps ul { list-style: none; padding: 0; margin: 0; }
-#laps li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #888;
-  padding: 5px 0;
-  opacity: 0;
-  transform: translateY(-10px);
-  transition: all 0.3s;
-}
-#laps li.show { opacity: 1; transform: translateY(0); }
-#laps .lap-number { font-weight: bold; flex: 1; text-align: center; border-right: 1px solid #888; padding-right: 10px; }
-#laps .lap-time { font-family: monospace; flex: 1; text-align: center; padding-left: 10px; }
+#timer{ font-size:48px; margin-bottom:20px; display:inline-block; transition:transform 0.2s; }
+button{ font-size:18px; padding:10px 20px; margin:5px; cursor:pointer; border-radius:8px; border:none; }
+#lapCounterDisplay{ font-size:20px; margin-top:10px; }
+#laps{ margin-top:20px; border:1px solid #000; display:inline-block; padding:10px; max-width:280px; max-height:200px; overflow-y:auto; background-color:rgba(255,255,255,0.05); }
+#laps ul{ list-style:none; padding:0; margin:0; }
+#laps li{ display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #888; padding:5px 0; opacity:0; transform:translateY(-10px); transition:all 0.3s; }
+#laps li.show{ opacity:1; transform:translateY(0); }
+#laps .lap-number{ font-weight:bold; flex:1; text-align:center; border-right:1px solid #888; padding-right:10px; }
+#laps .lap-time{ font-family:monospace; flex:1; text-align:center; padding-left:10px; }
 
-/* レインボー */
-#rainbowBtn {
-  background: linear-gradient(270deg, red, orange, yellow, green, blue, indigo, violet);
-  background-size: 1400% 1400%;
-  color: white;
-  animation: rainbowBG 10s ease infinite;
-}
-@keyframes rainbowBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-.rainbow-theme { animation: fullRainbowBG 5s linear infinite; }
-@keyframes fullRainbowBG { 0% { background-color: red; } 50% { background-color: blue; } 100% { background-color: red; } }
+#rainbowBtn{ background:linear-gradient(270deg,red,orange,yellow,green,blue,indigo,violet); background-size:1400% 1400%; color:white; animation:rainbowBG 10s ease infinite; }
+@keyframes rainbowBG{ 0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;} }
+.rainbow-theme{ animation:fullRainbowBG 5s linear infinite; }
+@keyframes fullRainbowBG{ 0%{background-color:red;}50%{background-color:blue;}100%{background-color:red;} }
 
-/* サイドGIF */
-.side-gif {
-  position: fixed;
-  width: 120px;
-  height: 120px;
-  display: none;
-  z-index: 1000;
-  pointer-events: none;
-}
-#leftGif { left: 0; top: 50%; transform: translateY(-50%); }
-#rightGif { right: 10px; top: 50%; transform: translateY(-50%); }
-@keyframes swing { 0% { transform: translate(-50%, -50%) rotate(0deg); } 50% { transform: translate(-50%, -50%) rotate(5deg); } 100% { transform: translate(-50%, -50%) rotate(0deg); } }
-.side-gif.swing { animation: swing 0.5s ease-in-out infinite; }
+.side-gif{ position:fixed; width:120px; height:120px; display:none; z-index:1000; pointer-events:none; }
+#leftGif{ left:0; top:50%; transform:translateY(-50%); }
+#rightGif{ right:10px; top:50%; transform:translateY(-50%); }
+@keyframes swing{ 0%{transform:translate(-50%,-50%) rotate(0deg);}50%{transform:translate(-50%,-50%) rotate(5deg);}100%{transform:translate(-50%,-50%) rotate(0deg);} }
+.side-gif.swing{ animation:swing 0.5s ease-in-out infinite; }
 
-/* クリックGIF */
-.added-click-gif {
-  position: absolute;
-  pointer-events: none;
-  z-index: 1100;
-  transition: transform 0.1s;
-}
+.added-click-gif{ position:absolute; pointer-events:none; z-index:1100; transition:transform 0.1s; }
 </style>
 </head>
 <body class="light-mode">
@@ -120,158 +68,121 @@ let laps=[], lapCounter=0;
 let addedGifs=[];
 
 function formatTime(ms){
-    const totalSeconds = Math.floor(ms/1000);
-    const minutes = String(Math.floor(totalSeconds/60)).padStart(2,'0');
-    const seconds = String(totalSeconds%60).padStart(2,'0');
-    const centiseconds = String(Math.floor((ms%1000)/10)).padStart(2,'0');
-    return `${minutes}:${seconds}:${centiseconds}`;
+  const totalSeconds=Math.floor(ms/1000);
+  const minutes=String(Math.floor(totalSeconds/60)).padStart(2,'0');
+  const seconds=String(totalSeconds%60).padStart(2,'0');
+  const centiseconds=String(Math.floor((ms%1000)/10)).padStart(2,'0');
+  return `${minutes}:${seconds}:${centiseconds}`;
 }
 
-function updateTimer(){ 
-    if(running){ 
-        elapsedTime = Date.now()-startTime; 
-        timer.textContent = formatTime(elapsedTime); 
-    } 
-}
-
-function updateLapCounterDisplay(){ 
-    lapCounterDisplay.textContent = `Lap Count: ${lapCounter}`; 
-}
+function updateTimer(){ if(running){ elapsedTime=Date.now()-startTime; timer.textContent=formatTime(elapsedTime); } }
+function updateLapCounterDisplay(){ lapCounterDisplay.textContent=`Lap Count: ${lapCounter}`; }
 
 function renderLaps(){
-    lapList.innerHTML='';
-    laps.forEach(lap=>{
-        const li=document.createElement('li');
-        li.innerHTML=`<span class="lap-number">Lap ${lap.number}</span><span class="lap-time">${lap.time}</span>`;
-        lapList.appendChild(li);
-        setTimeout(()=>li.classList.add('show'),50);
-    });
-    lapList.scrollTop = lapList.scrollHeight;
+  lapList.innerHTML='';
+  laps.forEach(lap=>{
+    const li=document.createElement('li');
+    li.innerHTML=`<span class="lap-number">Lap ${lap.number}</span><span class="lap-time">${lap.time}</span>`;
+    lapList.appendChild(li);
+    setTimeout(()=>li.classList.add('show'),50);
+  });
+  lapList.scrollTop=lapList.scrollHeight;
 }
 
-themeToggleBtn.addEventListener('click', ()=>{
-    body.classList.toggle('dark-mode'); 
-    body.classList.toggle('light-mode'); 
-});
+themeToggleBtn.addEventListener('click',()=>{ body.classList.toggle('dark-mode'); body.classList.toggle('light-mode'); });
 
-startStopBtn.addEventListener('click', ()=>{
-    if(!running){
-        startTime = Date.now()-elapsedTime;
-        timerInterval = setInterval(updateTimer, 10);
-        startStopBtn.textContent='Stop';
-        running=true;
-    }else{
-        clearInterval(timerInterval);
-        elapsedTime = Date.now()-startTime;
-        startStopBtn.textContent='Start';
-        running=false;
-        if(elapsedTime>0){
-            lapCounter++;
-            laps.unshift({number:lapCounter, time:formatTime(elapsedTime)});
-            if(laps.length>10) laps.pop();
-            renderLaps();
-            updateLapCounterDisplay();
-        }
-    }
-});
-
-resetBtn.addEventListener('click', ()=>{
+startStopBtn.addEventListener('click',()=>{
+  if(!running){
+    startTime=Date.now()-elapsedTime;
+    timerInterval=setInterval(updateTimer,10);
+    startStopBtn.textContent='Stop';
+    running=true;
+  }else{
     clearInterval(timerInterval);
-    elapsedTime=0;
-    timer.textContent="00:00:00";
+    elapsedTime=Date.now()-startTime;
     startStopBtn.textContent='Start';
     running=false;
-    laps=[]; lapCounter=0;
-    updateLapCounterDisplay();
-    renderLaps();
+    if(elapsedTime>0){
+      lapCounter++;
+      laps.unshift({number:lapCounter,time:formatTime(elapsedTime)});
+      if(laps.length>10) laps.pop();
+      renderLaps();
+      updateLapCounterDisplay();
+    }
+  }
+});
 
+resetBtn.addEventListener('click',()=>{
+  clearInterval(timerInterval);
+  elapsedTime=0;
+  timer.textContent="00:00:00";
+  startStopBtn.textContent='Start';
+  running=false;
+  laps=[]; lapCounter=0;
+  updateLapCounterDisplay();
+  renderLaps();
+  addedGifs.forEach(obj=>clearInterval(obj.sizeInterval));
+  addedGifs.forEach(obj=>obj.el.remove());
+  addedGifs=[];
+});
+
+rainbowBtn.addEventListener('click',()=>{
+  rainbowActive=!rainbowActive;
+  if(rainbowActive){
+    body.classList.add('rainbow-theme');
+    leftGif.style.display='block';
+    rightGif.style.display='block';
+    leftGif.classList.add('swing');
+    rightGif.classList.add('swing');
+    rainbowBtn.textContent="Rainbow ON";
+    rainbowBGM.play().catch(()=>{}); 
+  }else{
+    body.classList.remove('rainbow-theme');
+    leftGif.style.display='none';
+    rightGif.style.display='none';
+    leftGif.classList.remove('swing');
+    rightGif.classList.remove('swing');
+    rainbowBtn.textContent="Rainbow OFF";
+    rainbowBGM.pause(); rainbowBGM.currentTime=0;
     addedGifs.forEach(obj=>clearInterval(obj.sizeInterval));
     addedGifs.forEach(obj=>obj.el.remove());
     addedGifs=[];
+  }
 });
 
-// iPhone対応: 音声はユーザータップ後のみ再生
-rainbowBtn.addEventListener('click', ()=>{
-    rainbowActive = !rainbowActive;
-    if(rainbowActive){
-        body.classList.add('rainbow-theme');
-        leftGif.style.display = 'block';
-        rightGif.style.display = 'block';
-        leftGif.classList.add('swing');
-        rightGif.classList.add('swing');
-        rainbowBtn.textContent="Rainbow ON";
+document.body.addEventListener('click',(e)=>{
+  if(!rainbowActive) return;
+  if(e.target.closest('button')) return;
+  clickSound.currentTime=0; clickSound.play().catch(()=>{});
+  const clickGif=document.createElement('img');
+  const isSpecial=Math.random()<0.1;
+  clickGif.src=isSpecial?'gifs/special.gif':'gifs/left.gif';
+  clickGif.classList.add('added-click-gif');
+  let x=e.pageX, y=e.pageY;
+  clickGif.style.left=`${x}px`; clickGif.style.top=`${y}px`;
+  clickGif.style.width='100px'; clickGif.style.height='100px';
+  clickGif.style.transform='translate(-50%,-50%) scaleX(1)';
+  document.body.appendChild(clickGif);
 
-        // iOS対策
-        rainbowBGM.play().catch(()=>{ alert("音声はタップ後でしか再生できません"); });
-    } else {
-        body.classList.remove('rainbow-theme');
-        leftGif.style.display = 'none';
-        rightGif.style.display = 'none';
-        leftGif.classList.remove('swing');
-        rightGif.classList.remove('swing');
-        rainbowBtn.textContent="Rainbow OFF";
-        rainbowBGM.pause();
-        rainbowBGM.currentTime=0;
+  let size=100;
+  const sizeInterval=setInterval(()=>{ size*=1.05; clickGif.style.width=`${size}px`; clickGif.style.height=`${size}px`; },10000);
 
-        addedGifs.forEach(obj=>clearInterval(obj.sizeInterval));
-        addedGifs.forEach(obj=>obj.el.remove());
-        addedGifs=[];
-    }
-});
+  let vx=(Math.random()*4+2)*(Math.random()<0.5?-1:1);
+  let vy=(Math.random()*4+2)*(Math.random()<0.5?-1:1);
+  let flippedX=1;
 
-/* クリックでバウンスGIF（10%で special.gif） */
-document.body.addEventListener('click', (e)=>{
-    if(!rainbowActive) return;
-    if(e.target.closest('button')) return;
-
-    clickSound.currentTime = 0;
-    clickSound.play().catch(()=>{});
-
-    const clickGif = document.createElement('img');
-    const isSpecial = Math.random() < 0.1; 
-    clickGif.src = isSpecial ? 'gifs/special.gif' : 'gifs/left.gif';
-    clickGif.classList.add('added-click-gif');
-
-    let x = e.pageX;
-    let y = e.pageY;
-    clickGif.style.left = `${x}px`;
-    clickGif.style.top  = `${y}px`;
-    clickGif.style.width='100px';
-    clickGif.style.height='100px';
-    clickGif.style.transform = 'translate(-50%, -50%) scaleX(1)';
-    document.body.appendChild(clickGif);
-
-    let size = 100;
-    const sizeInterval = setInterval(()=>{
-        size *= 1.05;
-        clickGif.style.width = `${size}px`;
-        clickGif.style.height = `${size}px`;
-    }, 10000);
-
-    let vx = (Math.random()*4+2)*(Math.random()<0.5?-1:1);
-    let vy = (Math.random()*4+2)*(Math.random()<0.5?-1:1);
-    let flippedX = 1;
-
-    function move(){
-        x += vx;
-        y += vy;
-        const w = clickGif.offsetWidth;
-        const h = clickGif.offsetHeight;
-        const maxX = window.innerWidth;
-        const maxY = window.innerHeight;
-
-        if(x - w/2 <= 0 || x + w/2 >= maxX){ vx *= -1; flippedX *= -1; }
-        if(y - h/2 <= 0 || y + h/2 >= maxY){ vy *= -1; }
-
-        clickGif.style.left = `${x}px`;
-        clickGif.style.top  = `${y}px`;
-        clickGif.style.transform = `translate(-50%, -50%) scaleX(${flippedX})`;
-
-        requestAnimationFrame(move);
-    }
-    move();
-
-    addedGifs.push({el:clickGif, sizeInterval});
+  function move(){
+    x+=vx; y+=vy;
+    const w=clickGif.offsetWidth, h=clickGif.offsetHeight;
+    const maxX=window.innerWidth, maxY=window.innerHeight;
+    if(x-w/2<=0||x+w/2>=maxX){ vx*=-1; flippedX*=-1; }
+    if(y-h/2<=0||y+h/2>=maxY){ vy*=-1; }
+    clickGif.style.left=`${x}px`; clickGif.style.top=`${y}px`;
+    clickGif.style.transform=`translate(-50%,-50%) scaleX(${flippedX})`;
+    requestAnimationFrame(move);
+  }
+  move();
+  addedGifs.push({el:clickGif,sizeInterval});
 });
 </script>
 </body>
