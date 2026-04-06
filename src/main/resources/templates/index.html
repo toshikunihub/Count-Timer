@@ -2,188 +2,148 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>タイマー</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>スマホ対応GIFドラッグ</title>
 <style>
-body { font-family: Arial,sans-serif; text-align:center; margin-top:50px; transition:background-color 0.5s,color 0.5s; position:relative; -webkit-tap-highlight-color:transparent; }
-body.light-mode{ background-color:#fff; color:#000; }
-body.dark-mode{ background-color:#121212; color:#fff; }
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #f0f0f0;
+    user-select: none;
+    touch-action: none; /* タッチ操作でスクロール抑制 */
+  }
 
-#timer{ font-size:48px; margin-bottom:20px; display:inline-block; transition:transform 0.2s; }
-button{ font-size:18px; padding:10px 20px; margin:5px; cursor:pointer; border-radius:8px; border:none; }
-#lapCounterDisplay{ font-size:20px; margin-top:10px; }
-#laps{ margin-top:20px; border:1px solid #000; display:inline-block; padding:10px; max-width:280px; max-height:200px; overflow-y:auto; background-color:rgba(255,255,255,0.05); }
-#laps ul{ list-style:none; padding:0; margin:0; }
-#laps li{ display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #888; padding:5px 0; opacity:0; transform:translateY(-10px); transition:all 0.3s; }
-#laps li.show{ opacity:1; transform:translateY(0); }
-#laps .lap-number{ font-weight:bold; flex:1; text-align:center; border-right:1px solid #888; padding-right:10px; }
-#laps .lap-time{ font-family:monospace; flex:1; text-align:center; padding-left:10px; }
+  .gif {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    cursor: grab;
+    z-index: 1;
+    pointer-events: auto;
+    touch-action: none;
+  }
 
-#rainbowBtn{ background:linear-gradient(270deg,red,orange,yellow,green,blue,indigo,violet); background-size:1400% 1400%; color:white; animation:rainbowBG 10s ease infinite; }
-@keyframes rainbowBG{ 0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;} }
-.rainbow-theme{ animation:fullRainbowBG 5s linear infinite; }
-@keyframes fullRainbowBG{ 0%{background-color:red;}50%{background-color:blue;}100%{background-color:red;} }
-
-.side-gif{ position:fixed; width:120px; height:120px; display:none; z-index:1000; pointer-events:none; }
-#leftGif{ left:0; top:50%; transform:translateY(-50%); }
-#rightGif{ right:10px; top:50%; transform:translateY(-50%); }
-@keyframes swing{ 0%{transform:translate(-50%,-50%) rotate(0deg);}50%{transform:translate(-50%,-50%) rotate(5deg);}100%{transform:translate(-50%,-50%) rotate(0deg);} }
-.side-gif.swing{ animation:swing 0.5s ease-in-out infinite; }
-
-.added-click-gif{ position:absolute; pointer-events:none; z-index:1100; transition:transform 0.1s; }
+  button {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 100; /* GIFより前面 */
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+  }
 </style>
 </head>
-<body class="light-mode">
+<body>
 
-<img id="leftGif" class="side-gif" src="gifs/left.gif" alt="Left GIF">
-<img id="rightGif" class="side-gif" src="gifs/right.gif" alt="Right GIF">
-
-<div id="timer">00:00:00</div><br>
-<button id="startStopBtn">Start</button>
-<button id="resetBtn">Reset</button>
-<button id="themeToggleBtn">Toggle Theme</button>
-<button id="rainbowBtn">Rainbow OFF</button><br>
-<div id="lapCounterDisplay">Lap Count: 0</div>
-<div id="laps"><ul id="lapList"></ul></div>
-
-<audio id="rainbowBGM" src="sounds/bgm.mp3" loop></audio>
-<audio id="clickSound" src="sounds/sound1.mp3"></audio>
+<button id="addGifBtn">GIF追加</button>
+<div id="gifContainer"></div>
 
 <script>
-const timer = document.getElementById('timer');
-const startStopBtn = document.getElementById('startStopBtn');
-const resetBtn = document.getElementById('resetBtn');
-const lapList = document.getElementById('lapList');
-const lapCounterDisplay = document.getElementById('lapCounterDisplay');
-const themeToggleBtn = document.getElementById('themeToggleBtn');
-const rainbowBtn = document.getElementById('rainbowBtn');
-const body = document.body;
-const leftGif = document.getElementById('leftGif');
-const rightGif = document.getElementById('rightGif');
-const rainbowBGM = document.getElementById('rainbowBGM');
-const clickSound = document.getElementById('clickSound');
+const gifContainer = document.getElementById('gifContainer');
+const addGifBtn = document.getElementById('addGifBtn');
 
-let startTime=0, elapsedTime=0, timerInterval=null, running=false, rainbowActive=false;
-let laps=[], lapCounter=0;
-let addedGifs=[];
+let gifCount = 0;
+let dragging = {}; // 複数GIF同時ドラッグ管理
 
-function formatTime(ms){
-  const totalSeconds=Math.floor(ms/1000);
-  const minutes=String(Math.floor(totalSeconds/60)).padStart(2,'0');
-  const seconds=String(totalSeconds%60).padStart(2,'0');
-  const centiseconds=String(Math.floor((ms%1000)/10)).padStart(2,'0');
-  return `${minutes}:${seconds}:${centiseconds}`;
+// タッチID対応でドラッグ開始
+function startDrag(e, gif) {
+  e.preventDefault();
+  for (let touch of e.changedTouches) {
+    dragging[touch.identifier] = {
+      element: gif,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      origX: parseFloat(gif.style.left),
+      origY: parseFloat(gif.style.top),
+      lastX: touch.clientX,
+      lastY: touch.clientY,
+      lastTime: performance.now(),
+      velocityX: 0,
+      velocityY: 0
+    };
+  }
 }
 
-function updateTimer(){ if(running){ elapsedTime=Date.now()-startTime; timer.textContent=formatTime(elapsedTime); } }
-function updateLapCounterDisplay(){ lapCounterDisplay.textContent=`Lap Count: ${lapCounter}`; }
+// タッチ移動
+function onDrag(e) {
+  e.preventDefault();
+  const now = performance.now();
+  for (let touch of e.changedTouches) {
+    const data = dragging[touch.identifier];
+    if (!data) continue;
+    const dx = touch.clientX - data.startX;
+    const dy = touch.clientY - data.startY;
+    data.element.style.left = data.origX + dx + 'px';
+    data.element.style.top = data.origY + dy + 'px';
 
-function renderLaps(){
-  lapList.innerHTML='';
-  laps.forEach(lap=>{
-    const li=document.createElement('li');
-    li.innerHTML=`<span class="lap-number">Lap ${lap.number}</span><span class="lap-time">${lap.time}</span>`;
-    lapList.appendChild(li);
-    setTimeout(()=>li.classList.add('show'),50);
-  });
-  lapList.scrollTop=lapList.scrollHeight;
-}
-
-themeToggleBtn.addEventListener('click',()=>{ body.classList.toggle('dark-mode'); body.classList.toggle('light-mode'); });
-
-startStopBtn.addEventListener('click',()=>{
-  if(!running){
-    startTime=Date.now()-elapsedTime;
-    timerInterval=setInterval(updateTimer,10);
-    startStopBtn.textContent='Stop';
-    running=true;
-  }else{
-    clearInterval(timerInterval);
-    elapsedTime=Date.now()-startTime;
-    startStopBtn.textContent='Start';
-    running=false;
-    if(elapsedTime>0){
-      lapCounter++;
-      laps.unshift({number:lapCounter,time:formatTime(elapsedTime)});
-      if(laps.length>10) laps.pop();
-      renderLaps();
-      updateLapCounterDisplay();
+    const dt = now - data.lastTime;
+    if (dt > 0) {
+      data.velocityX = (touch.clientX - data.lastX) / dt * 16;
+      data.velocityY = (touch.clientY - data.lastY) / dt * 16;
+      data.lastX = touch.clientX;
+      data.lastY = touch.clientY;
+      data.lastTime = now;
     }
   }
-});
+}
 
-resetBtn.addEventListener('click',()=>{
-  clearInterval(timerInterval);
-  elapsedTime=0;
-  timer.textContent="00:00:00";
-  startStopBtn.textContent='Start';
-  running=false;
-  laps=[]; lapCounter=0;
-  updateLapCounterDisplay();
-  renderLaps();
-  addedGifs.forEach(obj=>clearInterval(obj.sizeInterval));
-  addedGifs.forEach(obj=>obj.el.remove());
-  addedGifs=[];
-});
+// タッチ終了（慣性飛ばし）
+function endDrag(e) {
+  e.preventDefault();
+  for (let touch of e.changedTouches) {
+    const data = dragging[touch.identifier];
+    if (!data) continue;
+    const gifEl = data.element;
 
-rainbowBtn.addEventListener('click',()=>{
-  rainbowActive=!rainbowActive;
-  if(rainbowActive){
-    body.classList.add('rainbow-theme');
-    leftGif.style.display='block';
-    rightGif.style.display='block';
-    leftGif.classList.add('swing');
-    rightGif.classList.add('swing');
-    rainbowBtn.textContent="Rainbow ON";
-    rainbowBGM.play().catch(()=>{}); 
-  }else{
-    body.classList.remove('rainbow-theme');
-    leftGif.style.display='none';
-    rightGif.style.display='none';
-    leftGif.classList.remove('swing');
-    rightGif.classList.remove('swing');
-    rainbowBtn.textContent="Rainbow OFF";
-    rainbowBGM.pause(); rainbowBGM.currentTime=0;
-    addedGifs.forEach(obj=>clearInterval(obj.sizeInterval));
-    addedGifs.forEach(obj=>obj.el.remove());
-    addedGifs=[];
+    let vx = data.velocityX * 5; // 飛ぶ倍率
+    let vy = data.velocityY * 5;
+
+    function animate() {
+      vx *= 0.95; // 摩擦
+      vy *= 0.95;
+      let left = parseFloat(gifEl.style.left) + vx;
+      let top = parseFloat(gifEl.style.top) + vy;
+
+      // 画面端バウンド
+      if (left < 0) { left = 0; vx = -vx * 0.5; }
+      if (top < 0) { top = 0; vy = -vy * 0.5; }
+      if (left > window.innerWidth - 100) { left = window.innerWidth - 100; vx = -vx * 0.5; }
+      if (top > window.innerHeight - 100) { top = window.innerHeight - 100; vy = -vy * 0.5; }
+
+      gifEl.style.left = left + 'px';
+      gifEl.style.top = top + 'px';
+
+      if (Math.abs(vx) > 0.5 || Math.abs(vy) > 0.5) {
+        requestAnimationFrame(animate);
+      }
+    }
+    animate();
+    delete dragging[touch.identifier];
   }
-});
+}
 
-document.body.addEventListener('click',(e)=>{
-  if(!rainbowActive) return;
-  if(e.target.closest('button')) return;
-  clickSound.currentTime=0; clickSound.play().catch(()=>{});
-  const clickGif=document.createElement('img');
-  const isSpecial=Math.random()<0.1;
-  clickGif.src=isSpecial?'gifs/special.gif':'gifs/left.gif';
-  clickGif.classList.add('added-click-gif');
-  let x=e.pageX, y=e.pageY;
-  clickGif.style.left=`${x}px`; clickGif.style.top=`${y}px`;
-  clickGif.style.width='100px'; clickGif.style.height='100px';
-  clickGif.style.transform='translate(-50%,-50%) scaleX(1)';
-  document.body.appendChild(clickGif);
+// GIF追加
+function addGif() {
+  const gif = document.createElement('img');
+  gif.src = 'https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif';
+  gif.className = 'gif';
+  gif.style.left = Math.random() * (window.innerWidth - 100) + 'px';
+  gif.style.top = Math.random() * (window.innerHeight - 100) + 'px';
+  gif.dataset.id = gifCount++;
 
-  let size=100;
-  const sizeInterval=setInterval(()=>{ size*=1.05; clickGif.style.width=`${size}px`; clickGif.style.height=`${size}px`; },10000);
+  // タッチイベント追加
+  gif.addEventListener('touchstart', (e) => startDrag(e, gif), { passive: false });
 
-  let vx=(Math.random()*4+2)*(Math.random()<0.5?-1:1);
-  let vy=(Math.random()*4+2)*(Math.random()<0.5?-1:1);
-  let flippedX=1;
+  gifContainer.appendChild(gif);
+}
 
-  function move(){
-    x+=vx; y+=vy;
-    const w=clickGif.offsetWidth, h=clickGif.offsetHeight;
-    const maxX=window.innerWidth, maxY=window.innerHeight;
-    if(x-w/2<=0||x+w/2>=maxX){ vx*=-1; flippedX*=-1; }
-    if(y-h/2<=0||y+h/2>=maxY){ vy*=-1; }
-    clickGif.style.left=`${x}px`; clickGif.style.top=`${y}px`;
-    clickGif.style.transform=`translate(-50%,-50%) scaleX(${flippedX})`;
-    requestAnimationFrame(move);
-  }
-  move();
-  addedGifs.push({el:clickGif,sizeInterval});
-});
+// グローバルにタッチ移動・終了を監視
+document.addEventListener('touchmove', onDrag, { passive: false });
+document.addEventListener('touchend', endDrag, { passive: false });
+document.addEventListener('touchcancel', endDrag, { passive: false });
+
+addGifBtn.addEventListener('click', addGif);
 </script>
+
 </body>
 </html>
